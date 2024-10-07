@@ -1,29 +1,43 @@
-// server.js (backend entry point)
+// server/server.js
+
 const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-require('dotenv').config();
+const { Pool } = require('pg');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// PostgreSQL connection pool setup
+const pool = new Pool({
+  user: process.env.PG_USER, // Replace with your PostgreSQL user
+  host: process.env.PG_HOST, // Replace with your PostgreSQL host
+  database: process.env.PG_DATABASE, // Replace with your PostgreSQL database
+  password: process.env.PG_PASSWORD, // Replace with your PostgreSQL password
+  port: process.env.PG_PORT, // Replace with your PostgreSQL port, e.g., 5432
+});
+
+// Test PostgreSQL connection
+pool.connect((err, client, release) => {
+  if (err) {
+    return console.error('Error acquiring client', err.stack);
+  }
+  client.query('SELECT NOW()', (err, result) => {
+    release();
+    if (err) {
+      return console.error('Error executing query', err.stack);
+    }
+    console.log('PostgreSQL Connected:', result.rows);
+  });
+});
+
+// Middleware
 app.use(express.json());
 
-// Routes
+// Basic Route
 app.get('/', (req, res) => {
-  res.send('Pharma Procurement API');
+  res.send('Welcome to Pharma Procurement Automation System!');
 });
 
-// Database connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => {
-  console.log('Connected to MongoDB');
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-}).catch(err => {
-  console.error('Connection error', err);
-});
+app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
