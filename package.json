@@ -1,0 +1,14 @@
+{
+    "name": "project-pharma",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "start": "node server/server.js"
+    },
+    "dependencies": {
+        "pg": "^8.13.0",
+        "pg-hstore": "^2.3.4",
+        "project-pharma": "file:",
+        "sequelize": "^6.37.4"
+    }
+}
