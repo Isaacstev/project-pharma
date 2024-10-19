@@ -5,17 +5,26 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import PharmacySignIn from './pages/PharmacySignIn';
 import WholesalerSignIn from './pages/WholesalerSignIn';
-import './styles/App.css';  // Import global styles
+import PharmacyDashboard from './dashboards/PharmacyDashboard';
+import WholesalerDashboard from './dashboards/WholesalerDashboard';
+import Sales from './components/Sales';  // Import Sales page
+import Reports from './components/Reports';  // Import Reports page
+import Profile from './components/Profile';  // Profile page
+import './styles/App.css';
 
 function App() {
   return (
     <Router>
       <div className="App">
         <Routes>
-          {/* Default route should render the Home component */}
           <Route path="/" element={<Home />} />
           <Route path="/pharmacy-signin" element={<PharmacySignIn />} />
           <Route path="/wholesaler-signin" element={<WholesalerSignIn />} />
+          <Route path="/pharmacy-dashboard" element={<PharmacyDashboard />} />
+          <Route path="/wholesaler-dashboard" element={<WholesalerDashboard />} />
+          <Route path="/sales" element={<Sales />} />  {/* Sales route */}
+          <Route path="/reports" element={<Reports />} />  {/* Reports route */}
+          <Route path="/profile" element={<Profile />} />  {/* Profile route */}
         </Routes>
       </div>
     </Router>

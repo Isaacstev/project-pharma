@@ -1,0 +1,69 @@
+/* src/styles/Dashboard.css */
+
+.dashboard-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+.main-content {
+  flex-grow: 1;
+  padding: 30px;
+  background-color: #f4f4f4;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-metrics {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+
+.navbar {
+  background-color: #3498db;
+  color: #fff;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.inventory {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.inventory table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.inventory th, .inventory td {
+  padding: 15px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.inventory th {
+  background-color: #f8f8f8;
+}
+
+.inventory td {
+  background-color: #fcfcfc;
+}
+
+.inventory button {
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: #3498db;
+  color: white;
+  cursor: pointer;
+}
+
+.inventory button:hover {
+  background-color: #2980b9;
+}
