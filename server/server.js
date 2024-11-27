@@ -1,43 +1,45 @@
-// server/server.js
-
 const express = require('express');
-const { Pool } = require('pg');
 const dotenv = require('dotenv');
+const cors = require('cors');
+const authRoutes = require('./routes/authRoutes');
+const pharmacyRoutes = require('./routes/pharmacyRoutes');
+const wholesalerRoutes = require('./routes/wholesalerRoutes');
+const inventoryRoutes = require('./routes/inventoryRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 
 dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// PostgreSQL connection pool setup
-const pool = new Pool({
-  user: process.env.PG_USER, // Replace with your PostgreSQL user
-  host: process.env.PG_HOST, // Replace with your PostgreSQL host
-  database: process.env.PG_DATABASE, // Replace with your PostgreSQL database
-  password: process.env.PG_PASSWORD, // Replace with your PostgreSQL password
-  port: process.env.PG_PORT, // Replace with your PostgreSQL port, e.g., 5432
-});
-
-// Test PostgreSQL connection
-pool.connect((err, client, release) => {
-  if (err) {
-    return console.error('Error acquiring client', err.stack);
-  }
-  client.query('SELECT NOW()', (err, result) => {
-    release();
-    if (err) {
-      return console.error('Error executing query', err.stack);
-    }
-    console.log('PostgreSQL Connected:', result.rows);
-  });
-});
-
 // Middleware
+app.use(cors());
 app.use(express.json());
 
-// Basic Route
-app.get('/', (req, res) => {
-  res.send('Welcome to Pharma Procurement Automation System!');
+// Logging middleware for debugging purposes
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
 });
 
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+// Routes
+app.use('/api/auth', authRoutes);             // Authentication routes
+app.use('/api/pharmacy', pharmacyRoutes);     // Pharmacy-specific routes
+app.use('/api/wholesaler', wholesalerRoutes); // Wholesaler-specific routes
+app.use('/api/inventory', inventoryRoutes);   // Inventory management routes
+app.use('/api/orders', orderRoutes);          // Order management routes
+
+// Fallback route for unmatched routes
+app.use((req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
+
+// Global error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});

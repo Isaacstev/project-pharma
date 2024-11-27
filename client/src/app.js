@@ -1,34 +1,27 @@
-// src/App.js
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import PharmacySignIn from './pages/PharmacySignIn';
-import WholesalerSignIn from './pages/WholesalerSignIn';
-import PharmacyDashboard from './dashboards/PharmacyDashboard';
-import WholesalerDashboard from './dashboards/WholesalerDashboard';
-import Sales from './components/Sales';  // Import Sales page
-import Reports from './components/Reports';  // Import Reports page
-import Profile from './components/Profile';  // Profile page
-import './styles/App.css';
+import Home from './components/Home';
+import AuthForm from './components/AuthForm';
+import PharmacyDashboard from './pages/PharmacyDashboard';
+import WholesalerDashboard from './pages/WholesalerDashboard';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
+import Sales from './pages/Sales';
 
-function App() {
-  return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/pharmacy-signin" element={<PharmacySignIn />} />
-          <Route path="/wholesaler-signin" element={<WholesalerSignIn />} />
-          <Route path="/pharmacy-dashboard" element={<PharmacyDashboard />} />
-          <Route path="/wholesaler-dashboard" element={<WholesalerDashboard />} />
-          <Route path="/sales" element={<Sales />} />  {/* Sales route */}
-          <Route path="/reports" element={<Reports />} />  {/* Reports route */}
-          <Route path="/profile" element={<Profile />} />  {/* Profile route */}
-        </Routes>
-      </div>
-    </Router>
-  );
-}
+const App = () => {
+    return (
+        <Router>
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/auth" element={<AuthForm />} />
+                <Route path="/pharmacy-dashboard" element={<PharmacyDashboard />} />
+                <Route path="/wholesaler-dashboard" element={<WholesalerDashboard />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/sales" element={<Sales />} />
+            </Routes>
+        </Router>
+    );
+};
 
 export default App;
