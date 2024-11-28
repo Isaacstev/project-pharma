@@ -51,6 +51,16 @@
     color: #007bff;
     font-weight: bold;
 }
+.user-info {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #555;
+  }
+  
 
 /* Search bar */
 .search-bar {

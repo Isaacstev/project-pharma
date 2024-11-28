@@ -76,7 +76,15 @@ const PharmacyDashboard = () => {
 
   const handlePlaceOrder = async () => {
     try {
-      const userId = localStorage.getItem('userId');
+      const userId = localStorage.getItem('userId'); // Pharmacy ID
+      console.log('Placing order with:', {
+        pharmacyId: parseInt(userId, 10),
+        wholesalerId: parseInt(orderDetails.wholesalerId, 10),
+        drugName: orderDetails.drugName,
+        quantity: parseInt(orderDetails.quantity, 10),
+        paymentMethod: orderDetails.paymentMethod,
+      });
+  
       await placeOrder({
         pharmacyId: parseInt(userId, 10),
         wholesalerId: parseInt(orderDetails.wholesalerId, 10),
@@ -84,14 +92,15 @@ const PharmacyDashboard = () => {
         quantity: parseInt(orderDetails.quantity, 10),
         paymentMethod: orderDetails.paymentMethod,
       });
+  
       setShowPlaceOrderModal(false);
       alert('Order placed successfully');
     } catch (error) {
-      console.error('Error placing order:', error);
-      alert('Failed to place order');
+      console.error('Error placing order:', error.message);
+      alert(error.message || 'Failed to place order');
     }
   };
-
+  
   return (
     <div className="dashboard-container">
       <Sidebar type="Pharmacy" />

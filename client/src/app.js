@@ -6,7 +6,7 @@ import PharmacyDashboard from './pages/PharmacyDashboard';
 import WholesalerDashboard from './pages/WholesalerDashboard';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
-import Sales from './pages/Sales';
+import Orders from './pages/Orders';
 
 const App = () => {
     return (
@@ -18,7 +18,7 @@ const App = () => {
                 <Route path="/wholesaler-dashboard" element={<WholesalerDashboard />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/settings" element={<Settings />} />
-                <Route path="/sales" element={<Sales />} />
+                <Route path="/Orders" element={<Orders />} />
             </Routes>
         </Router>
     );

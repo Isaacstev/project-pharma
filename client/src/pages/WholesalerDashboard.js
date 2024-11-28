@@ -198,7 +198,7 @@ const WholesalerDashboard = () => {
               {orders.map((order) => (
                 <tr key={order.order_id}>
                   <td>{order.order_id}</td>
-                  <td>{order.pharmacy_id}</td>
+                  <td>{order.pharmacy_name}</td>
                   <td>{order.drug_name}</td>
                   <td>{order.quantity}</td>
                   <td>{order.status}</td>

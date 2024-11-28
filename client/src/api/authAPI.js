@@ -13,3 +13,4 @@ export const signUp = async (formData) => {
     const response = await axios.post(`${BASE_URL}/signup`, formData);
     return response.data;
 };
+

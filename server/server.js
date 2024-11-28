@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Logging middleware for debugging purposes
+// gpt debugger idk
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();

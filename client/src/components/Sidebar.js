@@ -6,18 +6,20 @@ const Sidebar = ({ type }) => {
     // Sidebar data for different types
     const sidebarData = {
         Pharmacy: {
-            title: "",
+            title: "Pharmacy Dashboard",
             links: [
                 { path: '/pharmacy-dashboard', label: 'Inventory' },
                 { path: '/orders', label: 'Orders' },
+                { path: '/profile', label: 'Profile' },
                 { path: '/settings', label: 'Settings' },
             ],
         },
         Wholesaler: {
-            title: "",
+            title: "Wholesaler Dashboard",
             links: [
                 { path: '/wholesaler-dashboard', label: 'Inventory' },
                 { path: '/orders', label: 'Orders' },
+                { path: '/profile', label: 'Profile' },
                 { path: '/settings', label: 'Settings' },
             ],
         },
