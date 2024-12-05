@@ -4,13 +4,12 @@ const pool = require('../db');
 const AuthController = {
     login: async (req, res) => {
         const { email, password } = req.body;
-
+    
         if (!email || !password) {
             return res.status(400).json({ error: 'Email and password are required' });
         }
-
+    
         try {
-            // Fetch user details and role from the database
             const result = await pool.query(
                 `SELECT u.user_id, u.password, r.role_name 
                  FROM users u 
@@ -18,20 +17,18 @@ const AuthController = {
                  WHERE u.email = $1`,
                 [email]
             );
-
+    
             if (result.rows.length === 0) {
                 return res.status(401).json({ error: 'Invalid email or password' });
             }
-
+    
             const user = result.rows[0];
-
-            // Verify the password
+    
             const isMatch = await bcrypt.compare(password, user.password);
             if (!isMatch) {
                 return res.status(401).json({ error: 'Invalid email or password' });
             }
-
-            // Return user details without generating a token
+    
             res.status(200).json({
                 message: 'Login successful',
                 role: user.role_name,
@@ -41,7 +38,7 @@ const AuthController = {
             console.error('Login error:', err.message);
             res.status(500).json({ error: 'Server error' });
         }
-    },
+    },    
 
     signUp: async (req, res) => {
         const { name, email, password, phone, address, role } = req.body;

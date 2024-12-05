@@ -24,7 +24,7 @@ const AuthForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-
+    
         try {
             if (isSignUp) {
                 await signUp(formData);
@@ -32,13 +32,25 @@ const AuthForm = () => {
                 setIsSignUp(false);
             } else {
                 const { role, userId } = await login(formData.email, formData.password);
+    
+                // Store role and userId in localStorage
                 localStorage.setItem('userId', userId);
-                navigate(`/${role.toLowerCase()}-dashboard`);
+                localStorage.setItem('role', role);
+    
+                // Navigate to the correct dashboard based on role
+                if (role === 'Pharmacy') {
+                    navigate('/pharmacy-dashboard');
+                } else if (role === 'Wholesaler') {
+                    navigate('/wholesaler-dashboard');
+                } else {
+                    throw new Error('Invalid role. Unable to navigate.');
+                }
             }
         } catch (err) {
             setError(err.response?.data?.error || 'An error occurred.');
         }
     };
+    
 
     return (
         <div className="auth-container">

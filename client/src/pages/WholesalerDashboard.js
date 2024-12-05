@@ -2,45 +2,63 @@ import React, { useEffect, useState } from 'react';
 import {
   getInventory,
   getLowStock,
+  viewAlmostExpired,
   addInventory,
+  updateInventory,
   removeDrug,
 } from '../api/inventoryAPI';
 import { getOrders, confirmOrder, denyOrder } from '../api/orderAPI';
 import Sidebar from '../components/Sidebar';
+import ModalManager from '../components/ModalManager';
 import '../styles/Dashboard.css';
 
 const WholesalerDashboard = () => {
   const [inventory, setInventory] = useState([]);
   const [lowStock, setLowStock] = useState([]);
+  const [almostExpired, setAlmostExpired] = useState([]);
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredInventory, setFilteredInventory] = useState([]);
-  const [showAddStockModal, setShowAddStockModal] = useState(false);
-  const [newStock, setNewStock] = useState({
-    drugName: '',
-    description: '',
-    batchId: '',
-    quantity: '',
-    salePrice: '',
-    manufactureDate: '',
-    expiryDate: '',
-  });
+  const [modalType, setModalType] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [modalData, setModalData] = useState({});
+  // eslint-disable-next-line
+  const [thresholds, setThresholds] = useState({ lowStock: 10, expiryDays: 30 }); // Default thresholds
 
   useEffect(() => {
     const fetchData = async () => {
-      const userId = localStorage.getItem('userId');
       try {
-        const inventoryData = await getInventory(userId);
-        const lowStockData = await getLowStock(userId);
-        const orderData = await getOrders(userId, 'Wholesaler');
+        const userId = localStorage.getItem('userId');
+        const role = localStorage.getItem('role');
+
+        if (!userId || role !== 'Wholesaler') {
+          localStorage.clear();
+          window.location.href = '/login';
+          return;
+        }
+
+        // Fetch thresholds from settings API
+        const settingsResponse = await fetch(`/api/settings/${userId}`);
+        const settingsData = await settingsResponse.json();
+        setThresholds(settingsData);
+
+        const inventoryData = await getInventory(userId, role);
         setInventory(inventoryData);
         setFilteredInventory(inventoryData);
+
+        const lowStockData = await getLowStock(userId, settingsData.lowStock);
         setLowStock(lowStockData);
+
+        const almostExpiredData = await viewAlmostExpired(userId, settingsData.expiryDays);
+        setAlmostExpired(almostExpiredData);
+
+        const orderData = await getOrders(userId, role);
         setOrders(orderData);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching data:', error.message);
       }
     };
+
     fetchData();
   }, []);
 
@@ -52,63 +70,76 @@ const WholesalerDashboard = () => {
     );
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewStock({ ...newStock, [name]: value });
+  const openModal = (type, data = {}) => {
+    setModalType(type);
+    setModalData(data);
+    setShowModal(true);
   };
 
-  const handleAddStock = async () => {
-    const userId = localStorage.getItem('userId');
+  const closeModal = () => {
+    setShowModal(false);
+    setModalData({});
+  };
+
+  const handleModalSubmit = async () => {
     try {
-      const response = await addInventory(userId, newStock);
-      setInventory((prev) => [...prev, response]);
-      setShowAddStockModal(false);
-      alert('Stock added successfully');
+      const userId = localStorage.getItem('userId');
+      if (modalType === 'Add Stock') {
+        await addInventory(userId, modalData);
+      } else if (modalType === 'Edit Stock') {
+        await updateInventory(modalData.inventory_id, modalData);
+      }
+      const updatedInventory = await getInventory(userId, 'Wholesaler');
+      setInventory(updatedInventory);
+      setFilteredInventory(updatedInventory);
+      closeModal();
     } catch (error) {
-      console.error('Error adding stock:', error);
-      alert('Failed to add stock');
+      console.error(`Error handling ${modalType}:`, error.message);
     }
+  };
+
+  const handleEdit = (item) => {
+    openModal('Edit Stock', item);
   };
 
   const handleRemoveDrug = async (inventoryId) => {
     try {
       const userId = localStorage.getItem('userId');
       await removeDrug(userId, inventoryId);
-      setInventory((prev) => prev.filter((item) => item.inventory_id !== inventoryId));
+      const updatedInventory = inventory.filter((item) => item.inventory_id !== inventoryId);
+      setInventory(updatedInventory);
+      setFilteredInventory(updatedInventory);
       alert('Drug removed successfully');
     } catch (error) {
-      console.error('Error removing drug:', error);
-      alert('Failed to remove drug');
+      console.error('Error removing drug:', error.message);
     }
   };
 
   const handleConfirmOrder = async (orderId) => {
     try {
       await confirmOrder(orderId);
-      setOrders((prev) =>
-        prev.map((order) =>
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
           order.order_id === orderId ? { ...order, status: 'Confirmed' } : order
         )
       );
       alert('Order confirmed');
     } catch (error) {
-      console.error('Error confirming order:', error);
-      alert('Failed to confirm order');
+      console.error('Error confirming order:', error.message);
     }
   };
 
   const handleDenyOrder = async (orderId) => {
     try {
       await denyOrder(orderId);
-      setOrders((prev) =>
-        prev.map((order) =>
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
           order.order_id === orderId ? { ...order, status: 'Denied' } : order
         )
       );
       alert('Order denied');
     } catch (error) {
-      console.error('Error denying order:', error);
-      alert('Failed to deny order');
+      console.error('Error denying order:', error.message);
     }
   };
 
@@ -127,6 +158,10 @@ const WholesalerDashboard = () => {
           <div className="dashboard-card">
             <h3>Low Stock Items</h3>
             <p>{lowStock.length}</p>
+          </div>
+          <div className="dashboard-card">
+            <h3>Almost Expired Drugs</h3>
+            <p>{almostExpired.length}</p>
           </div>
           <div className="dashboard-card">
             <h3>Pending Orders</h3>
@@ -148,7 +183,7 @@ const WholesalerDashboard = () => {
         {/* Inventory Section */}
         <div className="inventory-section">
           <h2>Inventory</h2>
-          <button className="add-stock-btn" onClick={() => setShowAddStockModal(true)}>
+          <button className="add-stock-btn" onClick={() => openModal('Add Stock')}>
             Add Stock
           </button>
           <table>
@@ -165,12 +200,25 @@ const WholesalerDashboard = () => {
             <tbody>
               {filteredInventory.map((item) => (
                 <tr key={item.inventory_id}>
-                  <td>{item.drug_name}</td>
+                  <td>
+                    {item.drug_name}{' '}
+                    {lowStock.some((low) => low.inventory_id === item.inventory_id) && (
+                      <span role="img" aria-label="Low stock warning">
+                        ⚠️
+                      </span>
+                    )}
+                    {almostExpired.some((expired) => expired.inventory_id === item.inventory_id) && (
+                      <span role="img" aria-label="Almost expired">
+                        ⏳
+                      </span>
+                    )}
+                  </td>
                   <td>{item.description}</td>
                   <td>{item.batch_number}</td>
                   <td>{item.quantity}</td>
                   <td>{item.sale_price}</td>
                   <td>
+                    <button onClick={() => handleEdit(item)}>Edit</button>
                     <button onClick={() => handleRemoveDrug(item.inventory_id)}>Remove</button>
                   </td>
                 </tr>
@@ -206,12 +254,8 @@ const WholesalerDashboard = () => {
                   <td>
                     {order.status === 'Pending' && (
                       <>
-                        <button onClick={() => handleConfirmOrder(order.order_id)}>
-                          Confirm
-                        </button>
-                        <button onClick={() => handleDenyOrder(order.order_id)}>
-                          Deny
-                        </button>
+                        <button onClick={() => handleConfirmOrder(order.order_id)}>Confirm</button>
+                        <button onClick={() => handleDenyOrder(order.order_id)}>Deny</button>
                       </>
                     )}
                   </td>
@@ -221,64 +265,17 @@ const WholesalerDashboard = () => {
           </table>
         </div>
 
-        {/* Add Stock Modal */}
-        {showAddStockModal && (
-          <div className="modal">
-            <h2>Add Stock</h2>
-            <div className="modal-content">
-              <input
-                type="text"
-                name="drugName"
-                placeholder="Drug Name"
-                value={newStock.drugName}
-                onChange={handleInputChange}
-              />
-              <textarea
-                name="description"
-                placeholder="Description"
-                value={newStock.description}
-                onChange={handleInputChange}
-              />
-              <input
-                type="text"
-                name="batchId"
-                placeholder="Batch ID"
-                value={newStock.batchId}
-                onChange={handleInputChange}
-              />
-              <input
-                type="number"
-                name="quantity"
-                placeholder="Quantity"
-                value={newStock.quantity}
-                onChange={handleInputChange}
-              />
-              <input
-                type="number"
-                name="salePrice"
-                placeholder="Sale Price"
-                value={newStock.salePrice}
-                onChange={handleInputChange}
-              />
-              <input
-                type="date"
-                name="manufactureDate"
-                placeholder="Manufacture Date"
-                value={newStock.manufactureDate}
-                onChange={handleInputChange}
-              />
-              <input
-                type="date"
-                name="expiryDate"
-                placeholder="Expiry Date"
-                value={newStock.expiryDate}
-                onChange={handleInputChange}
-              />
-              <button onClick={handleAddStock}>Submit</button>
-              <button onClick={() => setShowAddStockModal(false)}>Close</button>
-            </div>
-          </div>
-        )}
+        {/* Modal Manager */}
+        <ModalManager
+          type={modalType}
+          showModal={showModal}
+          closeModal={closeModal}
+          modalData={modalData}
+          handleInputChange={(e) =>
+            setModalData({ ...modalData, [e.target.name]: e.target.value })
+          }
+          handleSubmit={handleModalSubmit}
+        />
       </div>
     </div>
   );

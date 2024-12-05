@@ -1,45 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import '../styles/Settings.css';
 
-const Settings = ({ userId }) => {
-    const [thresholds, setThresholds] = useState({
+const Settings = ({ setLowStockThreshold, setExpiryDaysThreshold }) => {
+    const [localThresholds, setLocalThresholds] = useState({
         lowStock: 10,
         expiryDays: 30,
     });
 
-    useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const response = await fetch(`/api/settings/${userId}`);
-                const data = await response.json();
-                setThresholds(data);
-            } catch (error) {
-                console.error('Error fetching settings:', error.message);
-            }
-        };
-
-        fetchSettings();
-    }, [userId]);
-
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setThresholds((prev) => ({ ...prev, [name]: parseInt(value, 10) || 0 }));
+        setLocalThresholds((prev) => ({ ...prev, [name]: parseInt(value, 10) || 0 }));
     };
 
-    const handleSaveSettings = async () => {
-        try {
-            await fetch(`/api/settings/${userId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(thresholds),
-            });
-            alert('Settings updated successfully!');
-        } catch (error) {
-            console.error('Error saving settings:', error.message);
-            alert('Failed to update settings.');
-        }
+    const handleSaveSettings = () => {
+        setLowStockThreshold(localThresholds.lowStock);
+        setExpiryDaysThreshold(localThresholds.expiryDays);
+        alert('Thresholds updated successfully!');
     };
 
     return (
@@ -51,7 +27,7 @@ const Settings = ({ userId }) => {
                     <input
                         type="number"
                         name="lowStock"
-                        value={thresholds.lowStock}
+                        value={localThresholds.lowStock}
                         onChange={handleInputChange}
                     />
                 </div>
@@ -60,7 +36,7 @@ const Settings = ({ userId }) => {
                     <input
                         type="number"
                         name="expiryDays"
-                        value={thresholds.expiryDays}
+                        value={localThresholds.expiryDays}
                         onChange={handleInputChange}
                     />
                 </div>

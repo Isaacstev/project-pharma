@@ -61,18 +61,6 @@ export const denyOrder = async (orderId) => {
   }
 };
 
-// Cancel an order (optional, if needed)
-export const cancelOrder = async (orderId) => {
-  try {
-    const response = await axios.patch(`${BASE_URL}/${orderId}/cancel`);
-    return response.data;
-  } catch (error) {
-    console.error('Error canceling order:', error.response?.data || error.message);
-    const errorMessage = error.response?.data?.message || 'Failed to cancel order';
-    throw new Error(errorMessage);
-  }
-};
-
 // Get all wholesalers
 export const getWholesalers = async () => {
   try {
@@ -81,6 +69,18 @@ export const getWholesalers = async () => {
   } catch (error) {
     console.error('Error fetching wholesalers:', error.response?.data || error.message);
     const errorMessage = error.response?.data?.message || 'Failed to fetch wholesalers';
+    throw new Error(errorMessage);
+  }
+};
+
+// Get wholesalers with a specific drug for restocking
+export const getWholesalersForDrug = async (drugId) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/wholesalers/${drugId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching wholesalers for drug:', error.response?.data || error.message);
+    const errorMessage = error.response?.data?.message || 'Failed to fetch wholesalers for drug';
     throw new Error(errorMessage);
   }
 };

@@ -2,8 +2,6 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
-const pharmacyRoutes = require('./routes/pharmacyRoutes');
-const wholesalerRoutes = require('./routes/wholesalerRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 
@@ -23,8 +21,6 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/auth', authRoutes);             // Authentication routes
-app.use('/api/pharmacy', pharmacyRoutes);     // Pharmacy-specific routes
-app.use('/api/wholesaler', wholesalerRoutes); // Wholesaler-specific routes
 app.use('/api/inventory', inventoryRoutes);   // Inventory management routes
 app.use('/api/orders', orderRoutes);          // Order management routes
 

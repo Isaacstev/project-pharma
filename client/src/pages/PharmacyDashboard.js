@@ -1,112 +1,198 @@
 import React, { useEffect, useState } from 'react';
-import { getInventory, getLowStock, addInventory, searchDrug } from '../api/inventoryAPI';
+import {
+  getInventory,
+  getLowStock,
+  viewAlmostExpired,
+  addInventory,
+  updateInventory,
+  removeDrug,
+  getWholesalersForDrug,
+} from '../api/inventoryAPI';
 import { placeOrder, getWholesalers } from '../api/orderAPI';
 import Sidebar from '../components/Sidebar';
+import ModalManager from '../components/ModalManager';
 import '../styles/Dashboard.css';
 
 const PharmacyDashboard = () => {
   const [inventory, setInventory] = useState([]);
   const [lowStock, setLowStock] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [almostExpired, setAlmostExpired] = useState([]);
   const [filteredInventory, setFilteredInventory] = useState([]);
   const [wholesalers, setWholesalers] = useState([]);
-  const [showAddStockModal, setShowAddStockModal] = useState(false);
-  const [showPlaceOrderModal, setShowPlaceOrderModal] = useState(false);
-  const [newStock, setNewStock] = useState({
-    drugName: '',
-    description: '',
-    batchId: '',
-    quantity: '',
-    salePrice: '',
-    manufactureDate: '',
-    expiryDate: '',
-  });
-  const [orderDetails, setOrderDetails] = useState({
-    drugName: '',
-    quantity: '',
-    wholesalerId: '',
-    paymentMethod: '',
-  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [modalType, setModalType] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [modalData, setModalData] = useState({});
+  const [options, setOptions] = useState([]);
+  // eslint-disable-next-line
+  const [thresholds, setThresholds] = useState({ lowStock: 10, expiryDays: 30 });
 
   useEffect(() => {
     const fetchData = async () => {
-      const userId = localStorage.getItem('userId');
       try {
-        const inventoryData = await getInventory(userId);
-        const lowStockData = await getLowStock(userId);
+        const userId = localStorage.getItem('userId');
+        const role = localStorage.getItem('role');
+
+        if (!userId || role !== 'Pharmacy') {
+          localStorage.clear();
+          window.location.href = '/login';
+          return;
+        }
+
+        // Fetch thresholds from settings API
+        const settingsResponse = await fetch(`/api/settings/${userId}`);
+        const settingsData = await settingsResponse.json();
+        setThresholds(settingsData);
+
+        const inventoryData = await getInventory(userId, role);
         setInventory(inventoryData);
         setFilteredInventory(inventoryData);
+
+        const lowStockData = await getLowStock(userId, settingsData.lowStock);
         setLowStock(lowStockData);
 
-        const wholesalersData = await getWholesalers(); // Fetch all wholesalers
+        const almostExpiredData = await viewAlmostExpired(userId, settingsData.expiryDays);
+        setAlmostExpired(almostExpiredData);
+
+        const wholesalersData = await getWholesalers();
         setWholesalers(wholesalersData);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching data:', error.message);
       }
     };
+
     fetchData();
   }, []);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewStock({ ...newStock, [name]: value });
+  const handleSearch = () => {
+    setFilteredInventory(
+      inventory.filter((item) =>
+        item.drug_name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
   };
 
-  const handleSearch = async () => {
-    try {
-      const result = await searchDrug(searchTerm);
-      setFilteredInventory(result);
-    } catch (error) {
-      console.error('Error searching drug:', error);
-    }
-  };
+  const openModal = (type, data = {}) => {
+    setModalType(type);
+    setModalData(data);
 
-  const handleAddStock = async () => {
-    const userId = localStorage.getItem('userId');
-    try {
-      const response = await addInventory(userId, newStock);
-      setInventory((prev) => [...prev, response]);
-      setShowAddStockModal(false);
-      alert('Stock added successfully');
-    } catch (error) {
-      console.error('Error adding stock:', error);
-      alert('Failed to add stock');
-    }
-  };
-
-  const handlePlaceOrder = async () => {
-    try {
-      const userId = localStorage.getItem('userId'); // Pharmacy ID
-      console.log('Placing order with:', {
-        pharmacyId: parseInt(userId, 10),
-        wholesalerId: parseInt(orderDetails.wholesalerId, 10),
-        drugName: orderDetails.drugName,
-        quantity: parseInt(orderDetails.quantity, 10),
-        paymentMethod: orderDetails.paymentMethod,
+    if (type === 'Restock') {
+      getWholesalersForDrug(data.drugId).then((wholesalerOptions) => {
+        setOptions(wholesalerOptions);
       });
-  
-      await placeOrder({
-        pharmacyId: parseInt(userId, 10),
-        wholesalerId: parseInt(orderDetails.wholesalerId, 10),
-        drugName: orderDetails.drugName,
-        quantity: parseInt(orderDetails.quantity, 10),
-        paymentMethod: orderDetails.paymentMethod,
-      });
-  
-      setShowPlaceOrderModal(false);
-      alert('Order placed successfully');
+    } else if (type === 'Place Order') {
+      setOptions(wholesalers);
+    }
+
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setModalData({});
+  };
+
+  const handleRestock = async (drugId) => {
+    if (!drugId) {
+      alert('Unable to restock. Drug ID is missing.');
+      return;
+    }
+
+    try {
+      const wholesalersData = await getWholesalersForDrug(drugId);
+
+      setModalData((prev) => ({
+        ...prev,
+        drugId,
+        quantity: '',
+        wholesalerId: '',
+        paymentMethod: '',
+      }));
+
+      setWholesalers(wholesalersData);
+
+      openModal('Restock');
     } catch (error) {
-      console.error('Error placing order:', error.message);
-      alert(error.message || 'Failed to place order');
+      console.error('Error fetching wholesalers for restocking:', error.message);
+      alert('Failed to fetch wholesalers. Please try again.');
     }
   };
-  
+
+  const handleModalSubmit = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+
+      if (modalType === 'Add Stock') {
+        await addInventory(userId, modalData);
+      } else if (modalType === 'Edit Stock') {
+        await updateInventory(modalData.inventory_id, modalData);
+      } else if (modalType === 'Restock') {
+        if (!modalData.wholesalerId || !modalData.quantity || !modalData.paymentMethod) {
+          alert('Please fill all required fields for restocking.');
+          return;
+        }
+
+        await placeOrder({
+          pharmacyId: userId,
+          wholesalerId: modalData.wholesalerId,
+          drugName: modalData.drugId,
+          quantity: parseInt(modalData.quantity, 10),
+          paymentMethod: modalData.paymentMethod,
+        });
+
+        alert('Restock order placed successfully.');
+      } else if (modalType === 'Place Order') {
+        if (!modalData.wholesalerId || !modalData.drugName || !modalData.quantity || !modalData.paymentMethod) {
+          alert('Please fill all required fields for placing an order.');
+          return;
+        }
+
+        await placeOrder({
+          pharmacyId: userId,
+          wholesalerId: modalData.wholesalerId,
+          drugName: modalData.drugName,
+          quantity: parseInt(modalData.quantity, 10),
+          paymentMethod: modalData.paymentMethod,
+        });
+
+        alert('Order placed successfully.');
+      }
+
+      const updatedInventory = await getInventory(userId, 'Pharmacy');
+      setInventory(updatedInventory);
+      setFilteredInventory(updatedInventory);
+
+      closeModal();
+    } catch (error) {
+      console.error(`Error handling ${modalType} modal:`, error.message);
+      alert(`Failed to ${modalType.toLowerCase()}. Please try again.`);
+    }
+  };
+
+  const handleEdit = (item) => {
+    openModal('Edit Stock', item);
+  };
+
+  const handleRemoveDrug = async (inventoryId) => {
+    try {
+      const userId = localStorage.getItem('userId');
+      await removeDrug(userId, inventoryId);
+      const updatedInventory = inventory.filter((item) => item.inventory_id !== inventoryId);
+      setInventory(updatedInventory);
+      setFilteredInventory(updatedInventory);
+      alert('Drug removed successfully');
+    } catch (error) {
+      console.error('Error removing drug:', error.message);
+    }
+  };
+
   return (
     <div className="dashboard-container">
       <Sidebar type="Pharmacy" />
       <div className="main-content">
         <h1 className="dashboard-header">Pharmacy Dashboard</h1>
 
+        {/* Metrics Section */}
         <div className="dashboard-metrics">
           <div className="dashboard-card">
             <h3>Total Inventory</h3>
@@ -116,8 +202,13 @@ const PharmacyDashboard = () => {
             <h3>Low Stock Items</h3>
             <p>{lowStock.length}</p>
           </div>
+          <div className="dashboard-card">
+            <h3>Almost Expired Drugs</h3>
+            <p>{almostExpired.length}</p>
+          </div>
         </div>
 
+        {/* Search Bar */}
         <div className="search-bar">
           <input
             type="text"
@@ -128,17 +219,13 @@ const PharmacyDashboard = () => {
           <button onClick={handleSearch}>Search</button>
         </div>
 
+        {/* Inventory Section */}
         <div className="inventory-section">
           <h2>Inventory</h2>
-          <button className="add-stock-btn" onClick={() => setShowAddStockModal(true)}>
+          <button className="add-stock-btn" onClick={() => openModal('Add Stock')}>
             Add Stock
           </button>
-          <button
-            className="add-stock-btn"
-            onClick={() => {
-              setShowPlaceOrderModal(true);
-            }}
-          >
+          <button className="add-stock-btn" onClick={() => openModal('Place Order')}>
             Place Order
           </button>
           <table>
@@ -149,124 +236,50 @@ const PharmacyDashboard = () => {
                 <th>Batch</th>
                 <th>Quantity</th>
                 <th>Price</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredInventory.map((item) => (
                 <tr key={item.inventory_id}>
-                  <td>{item.drug_name}</td>
+                  <td>
+                    {item.drug_name}
+                    {lowStock.some((lowItem) => lowItem.inventory_id === item.inventory_id) && (
+                      // eslint-disable-next-line
+                      <span className="icon-warning" title="Low Stock">⚠️</span>
+                    )}
+                    {almostExpired.some((expItem) => expItem.inventory_id === item.inventory_id) && (
+                      // eslint-disable-next-line
+                      <span className="icon-expired" title="Almost Expired">⏳</span>
+                    )}
+                  </td>
                   <td>{item.description}</td>
                   <td>{item.batch_number}</td>
                   <td>{item.quantity}</td>
                   <td>{item.sale_price}</td>
+                  <td>
+                    <button onClick={() => handleEdit(item)}>Edit</button>
+                    <button onClick={() => handleRemoveDrug(item.inventory_id)}>Remove</button>
+                    <button onClick={() => handleRestock(item.drug_id)}>Restock</button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {showAddStockModal && (
-          <div className="modal">
-            <h2>Add Stock</h2>
-            <div className="modal-content">
-              <input
-                type="text"
-                name="drugName"
-                placeholder="Drug Name"
-                value={newStock.drugName}
-                onChange={handleInputChange}
-              />
-              <textarea
-                name="description"
-                placeholder="Description"
-                value={newStock.description}
-                onChange={handleInputChange}
-              />
-              <input
-                type="text"
-                name="batchId"
-                placeholder="Batch ID"
-                value={newStock.batchId}
-                onChange={handleInputChange}
-              />
-              <input
-                type="number"
-                name="quantity"
-                placeholder="Quantity"
-                value={newStock.quantity}
-                onChange={handleInputChange}
-              />
-              <input
-                type="number"
-                name="salePrice"
-                placeholder="Sale Price"
-                value={newStock.salePrice}
-                onChange={handleInputChange}
-              />
-              <input
-                type="date"
-                name="manufactureDate"
-                placeholder="Manufacture Date"
-                value={newStock.manufactureDate}
-                onChange={handleInputChange}
-              />
-              <input
-                type="date"
-                name="expiryDate"
-                placeholder="Expiry Date"
-                value={newStock.expiryDate}
-                onChange={handleInputChange}
-              />
-              <button onClick={handleAddStock}>Submit</button>
-              <button onClick={() => setShowAddStockModal(false)}>Close</button>
-            </div>
-          </div>
-        )}
-
-        {showPlaceOrderModal && (
-          <div className="modal">
-            <h2>Place Order</h2>
-            <div className="modal-content">
-              <input
-                type="text"
-                name="drugName"
-                placeholder="Drug Name"
-                value={orderDetails.drugName}
-                onChange={(e) => setOrderDetails({ ...orderDetails, drugName: e.target.value })}
-              />
-              <input
-                type="number"
-                name="quantity"
-                placeholder="Quantity"
-                value={orderDetails.quantity}
-                onChange={(e) => setOrderDetails({ ...orderDetails, quantity: e.target.value })}
-              />
-              <select
-                name="wholesalerId"
-                value={orderDetails.wholesalerId}
-                onChange={(e) => setOrderDetails({ ...orderDetails, wholesalerId: e.target.value })}
-              >
-                <option value="">Select Wholesaler</option>
-                {wholesalers.map((wholesaler) => (
-                  <option key={wholesaler.user_id} value={wholesaler.user_id}>
-                    {wholesaler.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                name="paymentMethod"
-                value={orderDetails.paymentMethod}
-                onChange={(e) => setOrderDetails({ ...orderDetails, paymentMethod: e.target.value })}
-              >
-                <option value="">Select Payment Method</option>
-                <option value="M-Pesa">M-Pesa</option>
-                <option value="Credit Card">Credit Card</option>
-              </select>
-              <button onClick={handlePlaceOrder}>Submit</button>
-              <button onClick={() => setShowPlaceOrderModal(false)}>Close</button>
-            </div>
-          </div>
-        )}
+        {/* Modal Manager */}
+        <ModalManager
+          type={modalType}
+          showModal={showModal}
+          closeModal={closeModal}
+          modalData={modalData}
+          options={options}
+          handleInputChange={(e) =>
+            setModalData({ ...modalData, [e.target.name]: e.target.value })
+          }
+          handleSubmit={handleModalSubmit}
+        />
       </div>
     </div>
   );
