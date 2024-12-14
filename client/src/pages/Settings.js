@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Sidebar from '../components/Sidebar'; // Import the Sidebar
 import '../styles/Settings.css';
 
 const Settings = ({ setLowStockThreshold, setExpiryDaysThreshold }) => {
@@ -19,28 +20,31 @@ const Settings = ({ setLowStockThreshold, setExpiryDaysThreshold }) => {
     };
 
     return (
-        <div className="settings-container">
-            <h1>Settings</h1>
-            <div className="settings-form">
-                <div>
-                    <label>Low Stock Threshold</label>
-                    <input
-                        type="number"
-                        name="lowStock"
-                        value={localThresholds.lowStock}
-                        onChange={handleInputChange}
-                    />
+        <div className="dashboard-container">
+            <Sidebar /> {/* Sidebar included */}
+            <div className="main-content">
+                <h1>Settings</h1>
+                <div className="settings-form">
+                    <div>
+                        <label>Low Stock Threshold</label>
+                        <input
+                            type="number"
+                            name="lowStock"
+                            value={localThresholds.lowStock}
+                            onChange={handleInputChange}
+                        />
+                    </div>
+                    <div>
+                        <label>Expiry Threshold (in days)</label>
+                        <input
+                            type="number"
+                            name="expiryDays"
+                            value={localThresholds.expiryDays}
+                            onChange={handleInputChange}
+                        />
+                    </div>
+                    <button onClick={handleSaveSettings}>Save Settings</button>
                 </div>
-                <div>
-                    <label>Expiry Threshold (in days)</label>
-                    <input
-                        type="number"
-                        name="expiryDays"
-                        value={localThresholds.expiryDays}
-                        onChange={handleInputChange}
-                    />
-                </div>
-                <button onClick={handleSaveSettings}>Save Settings</button>
             </div>
         </div>
     );

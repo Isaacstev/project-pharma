@@ -29,40 +29,41 @@ const PharmacyDashboard = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const userId = localStorage.getItem('userId');
-        const role = localStorage.getItem('role');
+        try {
+            const userId = localStorage.getItem('userId');
+            const role = localStorage.getItem('role');
 
-        if (!userId || role !== 'Pharmacy') {
-          localStorage.clear();
-          window.location.href = '/login';
-          return;
+            if (!userId || role !== 'Pharmacy') {
+                localStorage.clear();
+                window.location.href = '/login';
+                return;
+            }
+
+            // Fetch thresholds from settings API
+            const settingsResponse = await fetch(`/api/settings/${userId}`);
+            const settingsData = await settingsResponse.json();
+            setThresholds(settingsData);
+
+            // Fetch inventory for the Pharmacy role
+            const inventoryData = await getInventory(userId, 'Pharmacy'); //
+            setInventory(inventoryData);
+            setFilteredInventory(inventoryData);
+
+            const lowStockData = await getLowStock(userId, settingsData.lowStock);
+            setLowStock(lowStockData);
+
+            const almostExpiredData = await viewAlmostExpired(userId, settingsData.expiryDays);
+            setAlmostExpired(almostExpiredData);
+
+            const wholesalersData = await getWholesalers();
+            setWholesalers(wholesalersData);
+        } catch (error) {
+            console.error('Error fetching data:', error.message);
         }
-
-        // Fetch thresholds from settings API
-        const settingsResponse = await fetch(`/api/settings/${userId}`);
-        const settingsData = await settingsResponse.json();
-        setThresholds(settingsData);
-
-        const inventoryData = await getInventory(userId, role);
-        setInventory(inventoryData);
-        setFilteredInventory(inventoryData);
-
-        const lowStockData = await getLowStock(userId, settingsData.lowStock);
-        setLowStock(lowStockData);
-
-        const almostExpiredData = await viewAlmostExpired(userId, settingsData.expiryDays);
-        setAlmostExpired(almostExpiredData);
-
-        const wholesalersData = await getWholesalers();
-        setWholesalers(wholesalersData);
-      } catch (error) {
-        console.error('Error fetching data:', error.message);
-      }
     };
 
     fetchData();
-  }, []);
+}, []);
 
   const handleSearch = () => {
     setFilteredInventory(
@@ -190,7 +191,6 @@ const PharmacyDashboard = () => {
     <div className="dashboard-container">
       <Sidebar type="Pharmacy" />
       <div className="main-content">
-        <h1 className="dashboard-header">Pharmacy Dashboard</h1>
 
         {/* Metrics Section */}
         <div className="dashboard-metrics">
@@ -245,11 +245,11 @@ const PharmacyDashboard = () => {
                   <td>
                     {item.drug_name}
                     {lowStock.some((lowItem) => lowItem.inventory_id === item.inventory_id) && (
-                      // eslint-disable-next-line
+                        // eslint-disable-next-line
                       <span className="icon-warning" title="Low Stock">⚠️</span>
                     )}
                     {almostExpired.some((expItem) => expItem.inventory_id === item.inventory_id) && (
-                      // eslint-disable-next-line
+                        // eslint-disable-next-line
                       <span className="icon-expired" title="Almost Expired">⏳</span>
                     )}
                   </td>

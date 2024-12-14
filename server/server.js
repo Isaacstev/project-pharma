@@ -13,16 +13,16 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// gpt debugger idk
+
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
 });
 
 // Routes
-app.use('/api/auth', authRoutes);             // Authentication routes
-app.use('/api/inventory', inventoryRoutes);   // Inventory management routes
-app.use('/api/orders', orderRoutes);          // Order management routes
+app.use('/api/auth', authRoutes);          
+app.use('/api/inventory', inventoryRoutes);   
+app.use('/api/orders', orderRoutes);          
 
 // Fallback route for unmatched routes
 app.use((req, res) => {

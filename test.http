@@ -1,3 +1,1 @@
-### Fetch Sales Report
-GET http://localhost:5000/api/sales-report?userId=1&role=Pharmacy&startDate=2023-01-01&endDate=2023-12-31 HTTP/1.1
-Content-Type: application/json
+GET http://localhost:5000/api/orders?userId=1&role=Pharmacy

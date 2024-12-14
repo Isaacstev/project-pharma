@@ -84,3 +84,16 @@ export const getWholesalersForDrug = async (drugId) => {
     throw new Error(errorMessage);
   }
 };
+
+// Get sales report for Wholesalers or order report for Pharmacies
+export const getSalesReport = async (userId, role, startDate, endDate) => {
+  try {
+      const response = await axios.get(`${BASE_URL}/sales-report`, {
+          params: { userId, role, startDate, endDate },
+      });
+      return response.data;
+  } catch (error) {
+      console.error('Error fetching sales report:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.error || 'Failed to fetch sales report.');
+  }
+};

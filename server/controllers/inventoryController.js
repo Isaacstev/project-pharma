@@ -3,46 +3,58 @@ const pool = require('../db');
 const InventoryController = {
   // Get inventory for a specific user
   getInventory: async (req, res) => {
-    const { userId } = req.params;
-    const { role } = req.query;
-  
-    if (!role || (role !== 'Pharmacy' && role !== 'Wholesaler')) {
-      return res.status(400).json({ error: 'Invalid or missing role.' });
-    }
+    const { userId } = req.params; // Extract userId from params
+    const { role } = req.query; // Extract role from query
   
     try {
       let query;
       if (role === 'Pharmacy') {
+        // Fetch inventory specific to pharmacies
         query = `
-          SELECT i.inventory_id, d.name AS drug_name, b.batch_number, i.quantity, i.sale_price
+          SELECT 
+            i.inventory_id, 
+            d.name AS drug_name, 
+            b.batch_number, 
+            i.quantity, 
+            i.sale_price 
           FROM inventory i
           JOIN drugs d ON i.drug_id = d.drug_id
           JOIN batches b ON i.batch_id = b.batch_id
-          WHERE i.user_id = $1`;
+          WHERE i.user_id = $1
+        `;
       } else if (role === 'Wholesaler') {
+        // Fetch inventory specific to wholesalers
         query = `
-          SELECT i.inventory_id, d.name AS drug_name, b.batch_number, i.quantity, i.sale_price
+          SELECT 
+            i.inventory_id, 
+            d.name AS drug_name, 
+            b.batch_number, 
+            i.quantity, 
+            i.sale_price 
           FROM inventory i
           JOIN drugs d ON i.drug_id = d.drug_id
           JOIN batches b ON i.batch_id = b.batch_id
-          WHERE i.user_id = $1`;
+          WHERE i.user_id = $1
+        `;
+      } else {
+        return res.status(400).json({ error: 'Invalid or missing role.' });
       }
   
       const result = await pool.query(query, [userId]);
-      res.status(200).json(result.rows);
+      res.status(200).json(result.rows || []); // Ensure an empty array is returned if no results
     } catch (err) {
       console.error('Error fetching inventory:', err.message);
       res.status(500).json({ error: 'Server error' });
     }
-  },  
+  },   
 
   // Add inventory for a specific user
   addInventory: async (req, res) => {
-    const { userId } = req.params;
-    const { role } = req.query;
-
+    const { userId } = req.params; // Ensure userId is taken from the request params
+    const { role } = req.query;   // Ensure role is taken from the query
+  
     console.log('User ID:', userId); // Debug log
-    console.log('Role:', role);       // Debug log
+    console.log('Role:', role);      // Debug log
   
     if (!role || (role !== 'Pharmacy' && role !== 'Wholesaler')) {
       return res.status(400).json({ error: 'Invalid or missing role.' });
@@ -62,6 +74,7 @@ const InventoryController = {
       const client = await pool.connect();
       await client.query('BEGIN');
   
+      // Ensure the drug exists or create it
       let drugResult = await client.query(
         `SELECT drug_id FROM drugs WHERE name = $1`,
         [drugName]
@@ -78,6 +91,7 @@ const InventoryController = {
         drugId = newDrug.rows[0].drug_id;
       }
   
+      // Ensure the batch exists or create it
       let batchResult = await client.query(
         `SELECT batch_id FROM batches WHERE batch_number = $1 AND drug_id = $2`,
         [batchId, drugId]
@@ -95,6 +109,7 @@ const InventoryController = {
         finalBatchId = newBatch.rows[0].batch_id;
       }
   
+      // Insert inventory specific to the user
       await client.query(
         `INSERT INTO inventory (user_id, drug_id, batch_id, quantity, sale_price)
          VALUES ($1, $2, $3, $4, $5)`,
@@ -109,7 +124,7 @@ const InventoryController = {
       res.status(500).json({ error: 'Server error' });
     }
   },
-  
+   
   // Update inventory
   updateInventory: async (req, res) => {
     const { inventoryId } = req.params;

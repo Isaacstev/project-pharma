@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Sidebar from '../components/Sidebar'; // Import the Sidebar
 import '../styles/Profile.css';
 
 const Profile = ({ userId }) => {
@@ -45,37 +46,40 @@ const Profile = ({ userId }) => {
     };
 
     return (
-        <div className="profile-container">
-            <h1>Profile</h1>
-            <div className="profile-form">
-                <input
-                    type="text"
-                    name="name"
-                    value={profile.name}
-                    onChange={handleInputChange}
-                    placeholder="Name"
-                />
-                <input
-                    type="email"
-                    name="email"
-                    value={profile.email}
-                    onChange={handleInputChange}
-                    placeholder="Email"
-                />
-                <input
-                    type="text"
-                    name="phone"
-                    value={profile.phone}
-                    onChange={handleInputChange}
-                    placeholder="Phone"
-                />
-                <textarea
-                    name="address"
-                    value={profile.address}
-                    onChange={handleInputChange}
-                    placeholder="Address"
-                />
-                <button onClick={handleUpdateProfile}>Update Profile</button>
+        <div className="dashboard-container">
+            <Sidebar /> {/* Sidebar included */}
+            <div className="main-content">
+                <h1>Profile</h1>
+                <div className="profile-form">
+                    <input
+                        type="text"
+                        name="name"
+                        value={profile.name}
+                        onChange={handleInputChange}
+                        placeholder="Name"
+                    />
+                    <input
+                        type="email"
+                        name="email"
+                        value={profile.email}
+                        onChange={handleInputChange}
+                        placeholder="Email"
+                    />
+                    <input
+                        type="text"
+                        name="phone"
+                        value={profile.phone}
+                        onChange={handleInputChange}
+                        placeholder="Phone"
+                    />
+                    <textarea
+                        name="address"
+                        value={profile.address}
+                        onChange={handleInputChange}
+                        placeholder="Address"
+                    />
+                    <button onClick={handleUpdateProfile}>Update Profile</button>
+                </div>
             </div>
         </div>
     );

@@ -65,7 +65,7 @@ const OrderController = {
       console.error('Error placing order:', err.message);
       res.status(500).json({ error: err.message || 'Server error' });
     }
-  },
+  },  
   
   // Fetch orders
   getOrders: async (req, res) => {
@@ -158,8 +158,8 @@ const OrderController = {
   getSalesReport: async (req, res) => {
     const { userId, role, startDate, endDate } = req.query;
 
-    if (!startDate || !endDate) {
-        return res.status(400).json({ error: 'Start date and end date are required.' });
+    if (!userId || !role || !startDate || !endDate) {
+        return res.status(400).json({ error: 'Missing required parameters.' });
     }
 
     try {
@@ -168,29 +168,25 @@ const OrderController = {
         if (role === 'Wholesaler') {
             query = `
                 SELECT 
-                    d.name AS drug_name, 
-                    SUM(oi.quantity) AS total_quantity, 
-                    SUM(oi.subtotal) AS total_sales
+                    o.order_id, d.name AS drug_name, oi.quantity, oi.unit_price, oi.subtotal,
+                    o.order_date, o.payment_method, o.status
                 FROM orders o
                 JOIN order_items oi ON o.order_id = oi.order_id
                 JOIN drugs d ON oi.drug_id = d.drug_id
                 WHERE o.wholesaler_id = $1 AND o.order_date BETWEEN $2 AND $3
-                GROUP BY d.name
-                ORDER BY total_sales DESC
+                ORDER BY o.order_date DESC
             `;
             params = [userId, startDate, endDate];
         } else if (role === 'Pharmacy') {
             query = `
                 SELECT 
-                    d.name AS drug_name, 
-                    SUM(oi.quantity) AS total_quantity, 
-                    SUM(oi.subtotal) AS total_sales
+                    o.order_id, d.name AS drug_name, oi.quantity, oi.unit_price, oi.subtotal,
+                    o.order_date, o.payment_method, o.status
                 FROM orders o
                 JOIN order_items oi ON o.order_id = oi.order_id
                 JOIN drugs d ON oi.drug_id = d.drug_id
                 WHERE o.pharmacy_id = $1 AND o.order_date BETWEEN $2 AND $3
-                GROUP BY d.name
-                ORDER BY total_sales DESC
+                ORDER BY o.order_date DESC
             `;
             params = [userId, startDate, endDate];
         } else {
@@ -203,7 +199,7 @@ const OrderController = {
         console.error('Error fetching sales report:', err.message);
         res.status(500).json({ error: 'Server error' });
     }
-  }
+  },
 };
 
 module.exports = OrderController;

@@ -1,35 +1,140 @@
-.sales-report-section {
-    margin-top: 20px;
-    background: #f9f9f9;
+/* General container styling */
+.orders-container {
     padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: auto;
+    max-width: 1200px;
+    font-family: 'Arial', sans-serif;
+    color: #333;
 }
 
+/* Header styling */
+.orders-container h1 {
+    text-align: center;
+    font-size: 2.5rem;
+    color: #0056b3;
+    margin-bottom: 20px;
+}
+
+/* Sales report section styling */
+.sales-report-section {
+    margin-top: 20px;
+    background: #fdfdfd;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ddd;
+}
+
+/* Title in the sales report section */
+.sales-report-section h2 {
+    font-size: 1.8rem;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+/* Date input and button container */
+.date-inputs {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+/* Input fields styling */
+.date-inputs input {
+    padding: 10px 15px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    width: 200px;
+    transition: all 0.2s ease;
+}
+
+.date-inputs input:focus {
+    border-color: #0056b3;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 86, 179, 0.3);
+}
+
+/* Button styling */
+.date-inputs button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    color: white;
+    background: #0056b3;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.date-inputs button:hover {
+    background: #003d80;
+}
+
+.date-inputs button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Error message styling */
+.error-message {
+    color: #d9534f;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* Sales report table styling */
 .sales-report-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
     background: white;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .sales-report-table th,
 .sales-report-table td {
     border: 1px solid #ddd;
-    padding: 12px;
+    padding: 15px;
     text-align: center;
+    font-size: 1rem;
 }
 
 .sales-report-table th {
     background: #0056b3;
     color: white;
+    font-weight: bold;
 }
 
 .sales-report-table tr:nth-child(even) {
-    background: #f2f2f2;
+    background: #f9f9f9;
 }
 
 .sales-report-table tr:hover {
-    background: #eaeaea;
+    background: #e6f0ff;
+}
+
+/* Responsive table for smaller devices */
+@media screen and (max-width: 768px) {
+    .sales-report-table {
+        font-size: 0.9rem;
+    }
+
+    .date-inputs {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .date-inputs input {
+        width: 100%;
+    }
+
+    .date-inputs button {
+        width: 100%;
+    }
 }
